@@ -30,3 +30,26 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Location(models.Model):
+    LOCATION_TYPES = [
+        ('WAREHOUSE', 'Warehouse'),
+        ('OFFICE', 'Office'),
+        ('STORAGE', 'Storage'),
+    ]
+
+    name = models.CharField(max_length=100)
+    location_type = models.CharField(max_length=20, choices=LOCATION_TYPES, default='WAREHOUSE')
+    address = models.TextField(blank=True, null=True)
+    capacity = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Location'
+        verbose_name_plural = 'Locations'
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_location_type_display()})"
