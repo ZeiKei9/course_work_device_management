@@ -31,8 +31,10 @@ class DeviceAdmin(admin.ModelAdmin):
         "category",
         "brand",
         "status",
+        "condition",
         "location",
         "created_at",
     ]
     search_fields = ["name", "serial_number", "inventory_number"]
-    list_filter = ["status", "category", "brand", "created_at"]
+    list_filter = ["status", "condition", "category", "brand", "created_at"]
+    readonly_fields = ["created_at", "updated_at"]

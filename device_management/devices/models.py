@@ -66,6 +66,13 @@ class Device(models.Model):
         ("RETIRED", "Retired"),
     ]
 
+    CONDITION_CHOICES = [
+        ("EXCELLENT", "Excellent"),
+        ("GOOD", "Good"),
+        ("FAIR", "Fair"),
+        ("POOR", "Poor"),
+    ]
+
     name = models.CharField(max_length=200)
     serial_number = models.CharField(max_length=100, unique=True)
     inventory_number = models.CharField(max_length=100, unique=True)
@@ -83,6 +90,15 @@ class Device(models.Model):
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default="AVAILABLE"
     )
+    purchase_date = models.DateField(null=True, blank=True)
+    purchase_price = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    warranty_until = models.DateField(null=True, blank=True)
+    condition = models.CharField(
+        max_length=20, choices=CONDITION_CHOICES, default="GOOD"
+    )
+    notes = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
