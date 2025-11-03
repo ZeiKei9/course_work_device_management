@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class Category(models.Model):
@@ -172,3 +173,32 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.device.name} - {self.get_doc_type_display()}: {self.title}"
+
+
+class Reservation(models.Model):
+    STATUS_CHOICES = [
+        ("ACTIVE", "Active"),
+        ("CANCELLED", "Cancelled"),
+        ("COMPLETED", "Completed"),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="reservations"
+    )
+    device = models.ForeignKey(
+        Device, on_delete=models.CASCADE, related_name="reservations"
+    )
+    reserved_from = models.DateTimeField()
+    reserved_until = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ACTIVE")
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Reservation"
+        verbose_name_plural = "Reservations"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.device.name} ({self.status})"

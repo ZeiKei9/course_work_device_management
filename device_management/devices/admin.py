@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Brand, Location, Device, Spec, Document
+from .models import Category, Brand, Location, Device, Spec, Document, Reservation
 
 
 @admin.register(Category)
@@ -72,3 +72,18 @@ class DocumentAdmin(admin.ModelAdmin):
     list_display = ["device", "doc_type", "title", "uploaded_at"]
     search_fields = ["device__name", "title"]
     list_filter = ["doc_type", "uploaded_at"]
+
+
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = [
+        "user",
+        "device",
+        "reserved_from",
+        "reserved_until",
+        "status",
+        "created_at",
+    ]
+    search_fields = ["user__username", "device__name"]
+    list_filter = ["status", "created_at"]
+    readonly_fields = ["created_at", "updated_at"]
