@@ -110,6 +110,15 @@ class Device(models.Model):
     def __str__(self):
         return f"{self.name} ({self.serial_number})"
 
+    def is_available(self):
+        return self.status == "AVAILABLE"
+
+    def get_specifications(self):
+        return self.specifications.all()
+
+    def get_full_name(self):
+        return f"{self.brand.name} {self.name}"
+
 
 class Spec(models.Model):
     SPEC_TYPE_CHOICES = [

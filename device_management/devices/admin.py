@@ -38,6 +38,26 @@ class DeviceAdmin(admin.ModelAdmin):
     search_fields = ["name", "serial_number", "inventory_number"]
     list_filter = ["status", "condition", "category", "brand", "created_at"]
     readonly_fields = ["created_at", "updated_at"]
+    fieldsets = [
+        (
+            "Basic Information",
+            {
+                "fields": [
+                    "name",
+                    "serial_number",
+                    "inventory_number",
+                    "category",
+                    "brand",
+                ]
+            },
+        ),
+        ("Status", {"fields": ["status", "condition", "location"]}),
+        (
+            "Purchase Information",
+            {"fields": ["purchase_date", "purchase_price", "warranty_until"]},
+        ),
+        ("Additional", {"fields": ["notes", "created_at", "updated_at"]}),
+    ]
 
 
 @admin.register(Spec)
