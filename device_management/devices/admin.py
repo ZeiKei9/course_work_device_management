@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Brand, Location, Device
+from .models import Category, Brand, Location, Device, Spec
 
 
 @admin.register(Category)
@@ -38,3 +38,10 @@ class DeviceAdmin(admin.ModelAdmin):
     search_fields = ["name", "serial_number", "inventory_number"]
     list_filter = ["status", "condition", "category", "brand", "created_at"]
     readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(Spec)
+class SpecAdmin(admin.ModelAdmin):
+    list_display = ["device", "spec_type", "value", "created_at"]
+    search_fields = ["device__name", "value"]
+    list_filter = ["spec_type", "created_at"]

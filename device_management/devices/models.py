@@ -109,3 +109,30 @@ class Device(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.serial_number})"
+
+
+class Spec(models.Model):
+    SPEC_TYPE_CHOICES = [
+        ("CPU", "Processor"),
+        ("RAM", "RAM"),
+        ("STORAGE", "Storage"),
+        ("SCREEN", "Screen Size"),
+        ("COLOR", "Color"),
+        ("OS", "Operating System"),
+        ("OTHER", "Other"),
+    ]
+
+    device = models.ForeignKey(
+        Device, on_delete=models.CASCADE, related_name="specifications"
+    )
+    spec_type = models.CharField(max_length=20, choices=SPEC_TYPE_CHOICES)
+    value = models.CharField(max_length=200)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Specification"
+        verbose_name_plural = "Specifications"
+        ordering = ["spec_type"]
+
+    def __str__(self):
+        return f"{self.device.name} - {self.get_spec_type_display()}: {self.value}"
