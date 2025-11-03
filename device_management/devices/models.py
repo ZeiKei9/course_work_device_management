@@ -136,3 +136,30 @@ class Spec(models.Model):
 
     def __str__(self):
         return f"{self.device.name} - {self.get_spec_type_display()}: {self.value}"
+
+
+class Document(models.Model):
+    DOC_TYPE_CHOICES = [
+        ("MANUAL", "Manual"),
+        ("WARRANTY", "Warranty"),
+        ("RECEIPT", "Receipt"),
+        ("CONTRACT", "Contract"),
+        ("OTHER", "Other"),
+    ]
+
+    device = models.ForeignKey(
+        Device, on_delete=models.CASCADE, related_name="documents"
+    )
+    doc_type = models.CharField(max_length=20, choices=DOC_TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    file = models.FileField(upload_to="documents/%Y/%m/%d/")
+    description = models.TextField(blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Document"
+        verbose_name_plural = "Documents"
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return f"{self.device.name} - {self.get_doc_type_display()}: {self.title}"

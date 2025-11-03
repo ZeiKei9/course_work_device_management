@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Brand, Location, Device, Spec
+from .models import Category, Brand, Location, Device, Spec, Document
 
 
 @admin.register(Category)
@@ -45,3 +45,10 @@ class SpecAdmin(admin.ModelAdmin):
     list_display = ["device", "spec_type", "value", "created_at"]
     search_fields = ["device__name", "value"]
     list_filter = ["spec_type", "created_at"]
+
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ["device", "doc_type", "title", "uploaded_at"]
+    search_fields = ["device__name", "title"]
+    list_filter = ["doc_type", "uploaded_at"]
