@@ -202,3 +202,31 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.device.name} ({self.status})"
+
+
+class Loan(models.Model):
+    STATUS_CHOICES = [
+        ("ACTIVE", "Active"),
+        ("OVERDUE", "Overdue"),
+        ("RETURNED", "Returned"),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="loans")
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="loans")
+    manager = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="managed_loans"
+    )
+    loaned_at = models.DateTimeField(auto_now_add=True)
+    due_date = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ACTIVE")
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Loan"
+        verbose_name_plural = "Loans"
+        ordering = ["-loaned_at"]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.device.name} ({self.status})"
