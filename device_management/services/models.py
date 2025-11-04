@@ -50,3 +50,27 @@ class ServiceOrder(models.Model):
 
     def __str__(self):
         return f"Service #{self.id} - {self.device.name} ({self.status})"
+
+
+class ServiceWork(models.Model):
+    service_order = models.ForeignKey(
+        ServiceOrder, on_delete=models.CASCADE, related_name="works"
+    )
+    work_description = models.TextField()
+    parts_used = models.TextField(blank=True, null=True)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    performed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="performed_works"
+    )
+    performed_at = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        verbose_name = "Service Work"
+        verbose_name_plural = "Service Works"
+        ordering = ["-performed_at"]
+
+    def __str__(self):
+        return (
+            f"Work on {self.service_order.device.name} - {self.work_description[:50]}"
+        )
