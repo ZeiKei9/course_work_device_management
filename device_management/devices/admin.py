@@ -1,5 +1,15 @@
 from django.contrib import admin
-from .models import Category, Brand, Location, Device, Spec, Document, Reservation, Loan
+from .models import (
+    Category,
+    Brand,
+    Location,
+    Device,
+    Spec,
+    Document,
+    Reservation,
+    Loan,
+    Return,
+)
 
 
 @admin.register(Category)
@@ -95,3 +105,11 @@ class LoanAdmin(admin.ModelAdmin):
     search_fields = ["user__username", "device__name", "manager__username"]
     list_filter = ["status", "loaned_at"]
     readonly_fields = ["loaned_at", "created_at", "updated_at"]
+
+
+@admin.register(Return)
+class ReturnAdmin(admin.ModelAdmin):
+    list_display = ["loan", "returned_at", "condition", "inspected_by"]
+    search_fields = ["loan__user__username", "loan__device__name"]
+    list_filter = ["condition", "returned_at"]
+    readonly_fields = ["returned_at", "created_at"]

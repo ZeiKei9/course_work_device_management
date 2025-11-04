@@ -230,3 +230,24 @@ class Loan(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.device.name} ({self.status})"
+
+
+class Return(models.Model):
+    loan = models.OneToOneField(
+        Loan, on_delete=models.CASCADE, related_name="return_record"
+    )
+    returned_at = models.DateTimeField(auto_now_add=True)
+    condition = models.CharField(max_length=20, choices=Device.CONDITION_CHOICES)
+    inspected_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name="inspected_returns"
+    )
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Return"
+        verbose_name_plural = "Returns"
+        ordering = ["-returned_at"]
+
+    def __str__(self):
+        return f"Return: {self.loan.device.name} by {self.loan.user.username}"
