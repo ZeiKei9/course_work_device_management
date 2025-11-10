@@ -1,5 +1,15 @@
 from rest_framework import serializers
-from .models import Category, Brand, Location, Device, Spec, Document, Reservation, Loan
+from .models import (
+    Category,
+    Brand,
+    Location,
+    Device,
+    Spec,
+    Document,
+    Reservation,
+    Loan,
+    Return,
+)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -193,3 +203,31 @@ class LoanSerializer(serializers.ModelSerializer):
         if device and not device.is_available():
             raise serializers.ValidationError("Device is not available for loan")
         return attrs
+
+
+class ReturnSerializer(serializers.ModelSerializer):
+    loan_device = serializers.CharField(source="loan.device.name", read_only=True)
+    loan_user = serializers.CharField(source="loan.user.username", read_only=True)
+    inspected_by_username = serializers.CharField(
+        source="inspected_by.username", read_only=True
+    )
+    condition_display = serializers.CharField(
+        source="get_condition_display", read_only=True
+    )
+
+    class Meta:
+        model = Return
+        fields = [
+            "id",
+            "loan",
+            "loan_device",
+            "loan_user",
+            "returned_at",
+            "condition",
+            "condition_display",
+            "inspected_by",
+            "inspected_by_username",
+            "notes",
+            "created_at",
+        ]
+        read_only_fields = ["returned_at", "created_at"]
