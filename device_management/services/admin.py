@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ServiceOrder, ServiceWork
+from .models import ServiceOrder, ServiceWork, Payment
 
 
 @admin.register(ServiceOrder)
@@ -22,3 +22,18 @@ class ServiceWorkAdmin(admin.ModelAdmin):
     search_fields = ["service_order__device__name", "work_description"]
     list_filter = ["performed_at"]
     readonly_fields = ["performed_at"]
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = [
+        "paid_by",
+        "payment_type",
+        "amount",
+        "related_loan",
+        "related_service_order",
+        "paid_at",
+    ]
+    search_fields = ["paid_by__username"]
+    list_filter = ["payment_type", "paid_at"]
+    readonly_fields = ["paid_at"]
