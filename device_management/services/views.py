@@ -3,8 +3,8 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import ServiceOrder
-from .serializers import ServiceOrderSerializer
+from .models import Payment, ServiceOrder
+from .serializers import PaymentSerializer, ServiceOrderSerializer
 
 
 class ServiceOrderViewSet(viewsets.ModelViewSet):
@@ -53,3 +53,57 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
             {"error": "Can only complete pending or in-progress orders"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.select_related(
+        "paid_by", "related_loan", "related_service_order"
+    ).all()
+    serializer_class = PaymentSerializer
+    filter_backends = [
+        filters.SearchFilter,
+        filters.OrderingFilter,
+        DjangoFilterBackend,
+    ]
+    search_fields = ["paid_by__username"]
+    ordering_fields = ["paid_at", "amount"]
+    ordering = ["-paid_at"]
+    filterset_fields = [
+        "payment_type",
+        "paid_by",
+        "related_loan",
+        "related_service_order",
+    ]
+
+    def perform_create(self, serializer):
+        serializer.save(paid_by=self.request.user)
+
+    @action(detail=False, methods=["get"])
+    def my_payments(self, request):
+        my_payments = self.queryset.filter(paid_by=request.user)
+        serializer = self.get_serializer(my_payments, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def by_type(self, request):
+        payment_type = request.query_params.get("type", None)
+        if not payment_type:
+            return Response(
+                {"error": "Payment type is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payments = self.queryset.filter(payment_type=payment_type)
+        serializer = self.get_serializer(payments, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def total_by_user(self, request):
+        from django.db.models import Sum
+
+        user_id = request.query_params.get("user", None)
+        if not user_id:
+            user_id = request.user.id
+
+        total = self.queryset.filter(paid_by_id=user_id).aggregate(total=Sum("amount"))
+        return Response({"user_id": user_id, "total_amount": total["total"] or 0})
