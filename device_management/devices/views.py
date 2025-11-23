@@ -1,5 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
+from rest_framework import filters, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .models import Brand, Category, Device, Location
 from .serializers import (
@@ -66,3 +68,43 @@ class DeviceViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return DeviceListSerializer
         return DeviceSerializer
+
+    @action(detail=False, methods=["get"])
+    def available(self, request):
+        available_devices = self.queryset.filter(status="AVAILABLE")
+        serializer = DeviceListSerializer(available_devices, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def by_serial(self, request):
+        serial = request.query_params.get("serial", None)
+        if not serial:
+            return Response(
+                {"error": "Serial number is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            device = Device.objects.get(serial_number=serial)
+            serializer = DeviceSerializer(device)
+            return Response(serializer.data)
+        except Device.DoesNotExist:
+            return Response(
+                {"error": "Device not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=["get"])
+    def history(self, request, pk=None):
+        device = self.get_object()
+        loans = device.loans.all().order_by("-loaned_at")
+        reservations = device.reservations.all().order_by("-created_at")
+        service_orders = device.service_orders.all().order_by("-created_at")
+
+        return Response(
+            {
+                "device": DeviceSerializer(device).data,
+                "loans_count": loans.count(),
+                "reservations_count": reservations.count(),
+                "service_orders_count": service_orders.count(),
+            }
+        )
