@@ -185,18 +185,41 @@ class LoanViewSet(viewsets.ModelViewSet):
     ordering = ["-loaned_at"]
     filterset_fields = ["status", "user", "device"]
 
+    def get_permissions(self):
+        if self.action in ["my_loans"]:
+            from rest_framework.permissions import IsAuthenticated
+
+            return [IsAuthenticated()]
+        return [IsManagerOrAdmin()]
+
+    def get_queryset(self):
+        if self.action == "my_loans":
+            return self.queryset.filter(user=self.request.user)
+
+        if self.request.user.is_staff:
+            return self.queryset
+
+        try:
+            profile = self.request.user.profile
+            if profile.role and profile.role.name in ["MANAGER", "ADMIN"]:
+                return self.queryset
+        except:
+            pass
+
+        return self.queryset.filter(user=self.request.user)
+
     def perform_create(self, serializer):
         serializer.save(manager=self.request.user)
 
     @action(detail=False, methods=["get"])
     def active(self, request):
-        active_loans = self.queryset.filter(status="ACTIVE")
+        active_loans = self.get_queryset().filter(status="ACTIVE")
         serializer = self.get_serializer(active_loans, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"])
     def overdue(self, request):
-        overdue_loans = self.queryset.filter(status="OVERDUE")
+        overdue_loans = self.get_queryset().filter(status="OVERDUE")
         serializer = self.get_serializer(overdue_loans, many=True)
         return Response(serializer.data)
 

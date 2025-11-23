@@ -78,6 +78,19 @@ class PaymentViewSet(viewsets.ModelViewSet):
         "related_service_order",
     ]
 
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return self.queryset
+
+        try:
+            profile = self.request.user.profile
+            if profile.role and profile.role.name in ["MANAGER", "ADMIN"]:
+                return self.queryset
+        except:
+            pass
+
+        return self.queryset.filter(paid_by=self.request.user)
+
     def perform_create(self, serializer):
         serializer.save(paid_by=self.request.user)
 
@@ -96,7 +109,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        payments = self.queryset.filter(payment_type=payment_type)
+        payments = self.get_queryset().filter(payment_type=payment_type)
         serializer = self.get_serializer(payments, many=True)
         return Response(serializer.data)
 
@@ -108,5 +121,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if not user_id:
             user_id = request.user.id
 
-        total = self.queryset.filter(paid_by_id=user_id).aggregate(total=Sum("amount"))
+        queryset = self.get_queryset()
+        total = queryset.filter(paid_by_id=user_id).aggregate(total=Sum("amount"))
         return Response({"user_id": user_id, "total_amount": total["total"] or 0})
