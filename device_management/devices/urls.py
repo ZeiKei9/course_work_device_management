@@ -8,6 +8,7 @@ from .views import (
     LoanViewSet,
     LocationViewSet,
     ReservationViewSet,
+    ReturnViewSet,
 )
 
 router = DefaultRouter()
@@ -17,6 +18,7 @@ router.register("locations", LocationViewSet)
 router.register("devices", DeviceViewSet)
 router.register("reservations", ReservationViewSet)
 router.register("loans", LoanViewSet)
+router.register("returns", ReturnViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),

@@ -3,7 +3,7 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Brand, Category, Device, Loan, Location, Reservation
+from .models import Brand, Category, Device, Loan, Location, Reservation, Return
 from .serializers import (
     BrandSerializer,
     CategorySerializer,
@@ -12,6 +12,7 @@ from .serializers import (
     LoanSerializer,
     LocationSerializer,
     ReservationSerializer,
+    ReturnSerializer,
 )
 
 
@@ -180,3 +181,22 @@ class LoanViewSet(viewsets.ModelViewSet):
         my_loans = self.queryset.filter(user=request.user)
         serializer = self.get_serializer(my_loans, many=True)
         return Response(serializer.data)
+
+
+class ReturnViewSet(viewsets.ModelViewSet):
+    queryset = Return.objects.select_related(
+        "loan", "loan__device", "loan__user", "inspected_by"
+    ).all()
+    serializer_class = ReturnSerializer
+    filter_backends = [
+        filters.SearchFilter,
+        filters.OrderingFilter,
+        DjangoFilterBackend,
+    ]
+    search_fields = ["loan__user__username", "loan__device__name"]
+    ordering_fields = ["returned_at"]
+    ordering = ["-returned_at"]
+    filterset_fields = ["condition", "inspected_by"]
+
+    def perform_create(self, serializer):
+        serializer.save(inspected_by=self.request.user)
