@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Brand, Category, Device, Loan, Location, Reservation, Return
+from .permissions import IsAdminOrReadOnly, IsManagerOrAdmin, IsOwnerOrManager
 from .serializers import (
     BrandSerializer,
     CategorySerializer,
@@ -19,6 +20,7 @@ from .serializers import (
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ["name", "description"]
     ordering_fields = ["name", "created_at"]
@@ -28,6 +30,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class BrandViewSet(viewsets.ModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -42,6 +45,7 @@ class BrandViewSet(viewsets.ModelViewSet):
 class LocationViewSet(viewsets.ModelViewSet):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -57,6 +61,8 @@ class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.select_related(
         "category", "brand", "location"
     ).prefetch_related("specifications", "documents")
+    serializer_class = DeviceSerializer
+    permission_classes = [IsManagerOrAdmin]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -71,6 +77,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
         if self.action == "list":
             return DeviceListSerializer
         return DeviceSerializer
+
+    def get_permissions(self):
+        if self.action in ["list", "retrieve", "available", "by_serial"]:
+            return [IsAdminOrReadOnly()]
+        return [IsManagerOrAdmin()]
 
     @action(detail=False, methods=["get"])
     def available(self, request):
@@ -116,6 +127,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.select_related("user", "device").all()
     serializer_class = ReservationSerializer
+    permission_classes = [IsOwnerOrManager]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -128,6 +140,17 @@ class ReservationViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def get_queryset(self):
+        if self.request.user.is_staff:
+            return self.queryset
+        try:
+            profile = self.request.user.profile
+            if profile.role and profile.role.name in ["MANAGER", "ADMIN"]:
+                return self.queryset
+        except:
+            pass
+        return self.queryset.filter(user=self.request.user)
 
     @action(detail=False, methods=["get"])
     def my_reservations(self, request):
@@ -151,6 +174,7 @@ class ReservationViewSet(viewsets.ModelViewSet):
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.select_related("user", "device", "manager").all()
     serializer_class = LoanSerializer
+    permission_classes = [IsManagerOrAdmin]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -188,6 +212,7 @@ class ReturnViewSet(viewsets.ModelViewSet):
         "loan", "loan__device", "loan__user", "inspected_by"
     ).all()
     serializer_class = ReturnSerializer
+    permission_classes = [IsManagerOrAdmin]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,

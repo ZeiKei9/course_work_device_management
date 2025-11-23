@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Payment, ServiceOrder
+from .permissions import IsManagerOrAdmin, IsOwnerOrReadOnly
 from .serializers import PaymentSerializer, ServiceOrderSerializer
 
 
@@ -14,6 +15,7 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
         .all()
     )
     serializer_class = ServiceOrderSerializer
+    permission_classes = [IsManagerOrAdmin]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
@@ -60,6 +62,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         "paid_by", "related_loan", "related_service_order"
     ).all()
     serializer_class = PaymentSerializer
+    permission_classes = [IsOwnerOrReadOnly]
     filter_backends = [
         filters.SearchFilter,
         filters.OrderingFilter,
