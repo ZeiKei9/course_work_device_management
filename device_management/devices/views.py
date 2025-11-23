@@ -3,12 +3,13 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Brand, Category, Device, Location, Reservation
+from .models import Brand, Category, Device, Loan, Location, Reservation
 from .serializers import (
     BrandSerializer,
     CategorySerializer,
     DeviceListSerializer,
     DeviceSerializer,
+    LoanSerializer,
     LocationSerializer,
     ReservationSerializer,
 )
@@ -144,3 +145,38 @@ class ReservationViewSet(viewsets.ModelViewSet):
             {"error": "Can only cancel active reservations"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class LoanViewSet(viewsets.ModelViewSet):
+    queryset = Loan.objects.select_related("user", "device", "manager").all()
+    serializer_class = LoanSerializer
+    filter_backends = [
+        filters.SearchFilter,
+        filters.OrderingFilter,
+        DjangoFilterBackend,
+    ]
+    search_fields = ["user__username", "device__name", "device__serial_number"]
+    ordering_fields = ["loaned_at", "due_date"]
+    ordering = ["-loaned_at"]
+    filterset_fields = ["status", "user", "device"]
+
+    def perform_create(self, serializer):
+        serializer.save(manager=self.request.user)
+
+    @action(detail=False, methods=["get"])
+    def active(self, request):
+        active_loans = self.queryset.filter(status="ACTIVE")
+        serializer = self.get_serializer(active_loans, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def overdue(self, request):
+        overdue_loans = self.queryset.filter(status="OVERDUE")
+        serializer = self.get_serializer(overdue_loans, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def my_loans(self, request):
+        my_loans = self.queryset.filter(user=request.user)
+        serializer = self.get_serializer(my_loans, many=True)
+        return Response(serializer.data)

@@ -5,6 +5,7 @@ from .views import (
     BrandViewSet,
     CategoryViewSet,
     DeviceViewSet,
+    LoanViewSet,
     LocationViewSet,
     ReservationViewSet,
 )
@@ -15,6 +16,7 @@ router.register("brands", BrandViewSet)
 router.register("locations", LocationViewSet)
 router.register("devices", DeviceViewSet)
 router.register("reservations", ReservationViewSet)
+router.register("loans", LoanViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
