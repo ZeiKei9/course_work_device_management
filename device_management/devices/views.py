@@ -3,13 +3,14 @@ from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Brand, Category, Device, Location
+from .models import Brand, Category, Device, Location, Reservation
 from .serializers import (
     BrandSerializer,
     CategorySerializer,
     DeviceListSerializer,
     DeviceSerializer,
     LocationSerializer,
+    ReservationSerializer,
 )
 
 
@@ -107,4 +108,39 @@ class DeviceViewSet(viewsets.ModelViewSet):
                 "reservations_count": reservations.count(),
                 "service_orders_count": service_orders.count(),
             }
+        )
+
+
+class ReservationViewSet(viewsets.ModelViewSet):
+    queryset = Reservation.objects.select_related("user", "device").all()
+    serializer_class = ReservationSerializer
+    filter_backends = [
+        filters.SearchFilter,
+        filters.OrderingFilter,
+        DjangoFilterBackend,
+    ]
+    search_fields = ["user__username", "device__name", "device__serial_number"]
+    ordering_fields = ["created_at", "reserved_from", "reserved_until"]
+    ordering = ["-created_at"]
+    filterset_fields = ["status", "user", "device"]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=["get"])
+    def my_reservations(self, request):
+        reservations = self.queryset.filter(user=request.user)
+        serializer = self.get_serializer(reservations, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, pk=None):
+        reservation = self.get_object()
+        if reservation.status == "ACTIVE":
+            reservation.status = "CANCELLED"
+            reservation.save()
+            return Response({"status": "Reservation cancelled"})
+        return Response(
+            {"error": "Can only cancel active reservations"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
