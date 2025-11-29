@@ -6,6 +6,11 @@ from rest_framework.response import Response
 from .models import Payment, ServiceOrder
 from .permissions import IsManagerOrAdmin, IsOwnerOrReadOnly
 from .serializers import PaymentSerializer, ServiceOrderSerializer
+from .utils import (
+    export_service_orders_to_csv,
+    export_service_orders_to_excel,
+    export_service_orders_to_json,
+)
 
 
 class ServiceOrderViewSet(viewsets.ModelViewSet):
@@ -55,6 +60,23 @@ class ServiceOrderViewSet(viewsets.ModelViewSet):
             {"error": "Can only complete pending or in-progress orders"},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    @action(detail=False, methods=["get"])
+    def export(self, request):
+        format_type = request.query_params.get("format", "csv").lower()
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if format_type == "csv":
+            return export_service_orders_to_csv(queryset)
+        elif format_type == "xlsx":
+            return export_service_orders_to_excel(queryset)
+        elif format_type == "json":
+            return export_service_orders_to_json(queryset)
+        else:
+            return Response(
+                {"error": "Invalid format. Use csv, xlsx, or json"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class PaymentViewSet(viewsets.ModelViewSet):

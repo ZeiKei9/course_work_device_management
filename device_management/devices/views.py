@@ -146,6 +146,23 @@ class DeviceViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         return export_devices_to_json(queryset)
 
+    @action(detail=False, methods=["get"])
+    def export(self, request):
+        format_type = request.query_params.get("format", "csv").lower()
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if format_type == "csv":
+            return export_devices_to_csv(queryset)
+        elif format_type == "xlsx":
+            return export_devices_to_excel(queryset)
+        elif format_type == "json":
+            return export_devices_to_json(queryset)
+        else:
+            return Response(
+                {"error": "Invalid format. Use csv, xlsx, or json"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.select_related("user", "device").all()
@@ -266,6 +283,23 @@ class LoanViewSet(viewsets.ModelViewSet):
     def export_json(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return export_loans_to_json(queryset)
+
+    @action(detail=False, methods=["get"])
+    def export(self, request):
+        format_type = request.query_params.get("format", "csv").lower()
+        queryset = self.filter_queryset(self.get_queryset())
+
+        if format_type == "csv":
+            return export_loans_to_csv(queryset)
+        elif format_type == "xlsx":
+            return export_loans_to_excel(queryset)
+        elif format_type == "json":
+            return export_loans_to_json(queryset)
+        else:
+            return Response(
+                {"error": "Invalid format. Use csv, xlsx, or json"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 
 class ReturnViewSet(viewsets.ModelViewSet):
