@@ -18,8 +18,10 @@ from .serializers import (
 from .utils import (
     export_devices_to_csv,
     export_devices_to_excel,
+    export_devices_to_json,
     export_loans_to_csv,
     export_loans_to_excel,
+    export_loans_to_json,
 )
 
 
@@ -139,6 +141,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         return export_devices_to_excel(queryset)
 
+    @action(detail=False, methods=["get"])
+    def export_json(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_devices_to_json(queryset)
+
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.select_related("user", "device").all()
@@ -254,6 +261,11 @@ class LoanViewSet(viewsets.ModelViewSet):
     def export_excel(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return export_loans_to_excel(queryset)
+
+    @action(detail=False, methods=["get"])
+    def export_json(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_loans_to_json(queryset)
 
 
 class ReturnViewSet(viewsets.ModelViewSet):

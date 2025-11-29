@@ -1,4 +1,5 @@
 import csv
+import json
 
 from django.http import HttpResponse
 from openpyxl import Workbook
@@ -224,4 +225,78 @@ def export_loans_to_excel(queryset):
         ws.column_dimensions[column].width = adjusted_width
 
     wb.save(response)
+    return response
+
+
+def export_devices_to_json(queryset):
+    response = HttpResponse(content_type="application/json")
+    response["Content-Disposition"] = 'attachment; filename="devices.json"'
+
+    devices_data = []
+    for device in queryset:
+        device_dict = {
+            "id": device.id,
+            "name": device.name,
+            "serial_number": device.serial_number,
+            "inventory_number": device.inventory_number,
+            "category": {"id": device.category.id, "name": device.category.name}
+            if device.category
+            else None,
+            "brand": {"id": device.brand.id, "name": device.brand.name}
+            if device.brand
+            else None,
+            "status": device.status,
+            "status_display": device.get_status_display(),
+            "condition": device.condition,
+            "condition_display": device.get_condition_display(),
+            "location": {"id": device.location.id, "name": device.location.name}
+            if device.location
+            else None,
+            "purchase_date": str(device.purchase_date)
+            if device.purchase_date
+            else None,
+            "purchase_price": str(device.purchase_price)
+            if device.purchase_price
+            else None,
+            "warranty_until": str(device.warranty_until)
+            if device.warranty_until
+            else None,
+            "created_at": device.created_at.isoformat(),
+        }
+        devices_data.append(device_dict)
+
+    response.write(json.dumps(devices_data, indent=2, ensure_ascii=False))
+    return response
+
+
+def export_loans_to_json(queryset):
+    response = HttpResponse(content_type="application/json")
+    response["Content-Disposition"] = 'attachment; filename="loans.json"'
+
+    loans_data = []
+    for loan in queryset:
+        loan_dict = {
+            "id": loan.id,
+            "user": {
+                "id": loan.user.id,
+                "username": loan.user.username,
+                "email": loan.user.email,
+            },
+            "device": {
+                "id": loan.device.id,
+                "name": loan.device.name,
+                "serial_number": loan.device.serial_number,
+            },
+            "manager": {"id": loan.manager.id, "username": loan.manager.username}
+            if loan.manager
+            else None,
+            "loaned_at": loan.loaned_at.isoformat(),
+            "due_date": loan.due_date.isoformat(),
+            "status": loan.status,
+            "status_display": loan.get_status_display(),
+            "notes": loan.notes,
+        }
+        loans_data.append(loan_dict)
+
+    response.write(json.dumps(loans_data, indent=2, ensure_ascii=False))
     return response
