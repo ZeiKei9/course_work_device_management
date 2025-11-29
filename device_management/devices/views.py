@@ -1,21 +1,20 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, status, viewsets
+from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
-from .models import Brand, Category, Device, Loan, Location, Reservation, Return
-from .permissions import IsAdminOrReadOnly, IsManagerOrAdmin, IsOwnerOrManager
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import Category, Brand, Location, Device, Reservation, Loan, Return
 from .serializers import (
-    BrandSerializer,
     CategorySerializer,
-    DeviceListSerializer,
-    DeviceSerializer,
-    LoanSerializer,
+    BrandSerializer,
     LocationSerializer,
+    DeviceSerializer,
+    DeviceListSerializer,
     ReservationSerializer,
-    ReturnSerializer,
+    LoanSerializer,
+    ReturnSerializer
 )
-
+from .permissions import IsAdminOrReadOnly, IsManagerOrAdmin, IsOwnerOrManager
+from .utils import export_devices_to_csv, export_loans_to_csv
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -123,6 +122,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
             }
         )
 
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_devices_to_csv(queryset)
+
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.select_related("user", "device").all()
@@ -228,6 +232,11 @@ class LoanViewSet(viewsets.ModelViewSet):
         my_loans = self.queryset.filter(user=request.user)
         serializer = self.get_serializer(my_loans, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_loans_to_csv(queryset)
 
 
 class ReturnViewSet(viewsets.ModelViewSet):
