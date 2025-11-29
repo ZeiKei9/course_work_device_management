@@ -1,20 +1,27 @@
-from rest_framework import viewsets, filters, status
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-from .models import Category, Brand, Location, Device, Reservation, Loan, Return
-from .serializers import (
-    CategorySerializer,
-    BrandSerializer,
-    LocationSerializer,
-    DeviceSerializer,
-    DeviceListSerializer,
-    ReservationSerializer,
-    LoanSerializer,
-    ReturnSerializer
-)
+
+from .models import Brand, Category, Device, Loan, Location, Reservation, Return
 from .permissions import IsAdminOrReadOnly, IsManagerOrAdmin, IsOwnerOrManager
-from .utils import export_devices_to_csv, export_loans_to_csv
+from .serializers import (
+    BrandSerializer,
+    CategorySerializer,
+    DeviceListSerializer,
+    DeviceSerializer,
+    LoanSerializer,
+    LocationSerializer,
+    ReservationSerializer,
+    ReturnSerializer,
+)
+from .utils import (
+    export_devices_to_csv,
+    export_devices_to_excel,
+    export_loans_to_csv,
+    export_loans_to_excel,
+)
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -127,6 +134,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         return export_devices_to_csv(queryset)
 
+    @action(detail=False, methods=["get"])
+    def export_excel(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_devices_to_excel(queryset)
+
 
 class ReservationViewSet(viewsets.ModelViewSet):
     queryset = Reservation.objects.select_related("user", "device").all()
@@ -237,6 +249,11 @@ class LoanViewSet(viewsets.ModelViewSet):
     def export_csv(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return export_loans_to_csv(queryset)
+
+    @action(detail=False, methods=["get"])
+    def export_excel(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_loans_to_excel(queryset)
 
 
 class ReturnViewSet(viewsets.ModelViewSet):
