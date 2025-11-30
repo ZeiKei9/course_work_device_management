@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Device Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Device Management System</h1>
+            <p class="lead">
+                Система учёта техники для управления устройствами, бронирования
+                и выдачи.
+            </p>
+            <hr class="my-4" />
+            <p>Выберите действие для начала работы с системой.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-laptop display-1 text-primary"></i>
+                <h5 class="card-title mt-3">Устройства</h5>
+                <p class="card-text">
+                    Просмотр каталога устройств и их характеристик.
+                </p>
+                <a href="{% url 'device_catalog' %}" class="btn btn-primary"
+                    >Перейти</a
+                >
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-book display-1 text-success"></i>
+                <h5 class="card-title mt-3">API Documentation</h5>
+                <p class="card-text">Документация по REST API системы.</p>
+                <a href="/api/docs/" class="btn btn-success">Открыть</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-gear display-1 text-warning"></i>
+                <h5 class="card-title mt-3">Администрирование</h5>
+                <p class="card-text">Панель управления системой.</p>
+                <a href="/admin/" class="btn btn-warning">Войти</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Возможности системы</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul>
+                            <li>Управление каталогом устройств</li>
+                            <li>Бронирование техники</li>
+                            <li>Выдача и возврат устройств</li>
+                            <li>Учёт ремонтов и обслуживания</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul>
+                            <li>Управление платежами</li>
+                            <li>Экспорт данных (CSV, Excel, JSON)</li>
+                            <li>REST API для интеграции</li>
+                            <li>Автоматические бэкапы</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

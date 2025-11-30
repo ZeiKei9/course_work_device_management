@@ -1,0 +1,118 @@
+{% extends 'base.html' %} {% block title %}Device Catalog - Device Management
+System{% endblock %} {% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1>Device Catalog</h1>
+        <p class="lead">Каталог доступных устройств в системе</p>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5>Фильтры</h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label class="form-label">Статус</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">Все</option>
+                            <option value="AVAILABLE">Доступно</option>
+                            <option value="RESERVED">Забронировано</option>
+                            <option value="LOANED">Выдано</option>
+                            <option value="IN_SERVICE">В ремонте</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Поиск</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="searchInput"
+                            placeholder="Название или серийный номер"
+                        />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        Применить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-9">
+        <div id="deviceList">
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Загрузка устройств...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+    async function loadDevices(filters = {}) {
+        const params = new URLSearchParams(filters);
+        const response = await fetch(`/api/devices/?${params}`);
+        const data = await response.json();
+
+        const deviceList = document.getElementById("deviceList");
+
+        if (data.results && data.results.length > 0) {
+            deviceList.innerHTML = data.results
+                .map(
+                    (device) => `
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="card-title">${device.name}</h5>
+                                <p class="card-text">
+                                    <strong>Serial:</strong> ${device.serial_number}<br>
+                                    <strong>Category:</strong> ${device.category_name}<br>
+                                    <strong>Brand:</strong> ${device.brand_name}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <span class="badge bg-${getStatusColor(device.status)} mb-2">${device.status_display}</span><br>
+                                <a href="/api/devices/${device.id}/" class="btn btn-sm btn-outline-primary">Подробнее</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+                )
+                .join("");
+        } else {
+            deviceList.innerHTML =
+                '<div class="alert alert-info">Устройства не найдены</div>';
+        }
+    }
+
+    function getStatusColor(status) {
+        const colors = {
+            AVAILABLE: "success",
+            RESERVED: "warning",
+            LOANED: "info",
+            IN_SERVICE: "danger",
+            RETIRED: "secondary",
+        };
+        return colors[status] || "secondary";
+    }
+
+    document.getElementById("filterForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const filters = {
+            status: document.getElementById("statusFilter").value,
+            search: document.getElementById("searchInput").value,
+        };
+        loadDevices(filters);
+    });
+
+    loadDevices();
+</script>
+{% endblock %}
