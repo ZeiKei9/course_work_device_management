@@ -1,6 +1,8 @@
-from decouple import config
-from pathlib import Path
+import os
 from datetime import timedelta
+from pathlib import Path
+
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -34,6 +36,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "django_filters",
     "drf_spectacular",
+    "dbbackup",
     "devices",
     "users",
     "services",
@@ -181,3 +184,15 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
 }
+
+
+DBBACKUP_STORAGE = "django.core.files.storage.FileSystemStorage"
+DBBACKUP_STORAGE_OPTIONS = {"location": BASE_DIR / "backups"}
+
+DBBACKUP_DATABASES = ["default"]
+
+DBBACKUP_CLEANUP_KEEP = 10
+DBBACKUP_CLEANUP_KEEP_MEDIA = 10
+
+DBBACKUP_FILENAME_TEMPLATE = "backup_{databasename}_{datetime}.{extension}"
+DBBACKUP_MEDIA_FILENAME_TEMPLATE = "media_{datetime}.{extension}"
