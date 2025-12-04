@@ -1,10 +1,31 @@
 import csv
 import json
+import os
 
+from django.conf import settings
 from django.http import HttpResponse
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.fonts import addMapping
+
+font_path = os.path.join(settings.BASE_DIR, 'static', 'fonts', 'arial.ttf')
+
+pdfmetrics.registerFont(TTFont('RusFont', font_path))
+addMapping('RusFont', 0, 0, 'RusFont')
+addMapping('RusFont', 0, 1, 'RusFont')
+addMapping('RusFont', 1, 0, 'RusFont')
+addMapping('RusFont', 1, 1, 'RusFont')
+font_name = 'RusFont'
+
+
+# --- CSV EXPORT FUNCTIONS ---
 
 def export_devices_to_csv(queryset):
     response = HttpResponse(content_type="text/csv")
@@ -228,6 +249,8 @@ def export_loans_to_excel(queryset):
     return response
 
 
+# --- JSON EXPORT FUNCTIONS ---
+
 def export_devices_to_json(queryset):
     response = HttpResponse(content_type="application/json")
     response["Content-Disposition"] = 'attachment; filename="devices.json"'
@@ -299,4 +322,100 @@ def export_loans_to_json(queryset):
         loans_data.append(loan_dict)
 
     response.write(json.dumps(loans_data, indent=2, ensure_ascii=False))
+    return response
+
+
+# --- PDF EXPORT FUNCTIONS ---
+
+def export_devices_to_pdf(queryset):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="devices.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4))
+    elements = []
+
+    styles = getSampleStyleSheet()
+
+    # Создаем свой стиль заголовка, чтобы не зависеть от Bold в Heading1
+    header_style = ParagraphStyle(
+        'RusHeader',
+        parent=styles['Normal'],
+        fontName=font_name, # Используем 'RusFont' или 'Helvetica'
+        fontSize=14,
+        alignment=1, # По центру
+        spaceAfter=20
+    )
+
+    elements.append(Paragraph("Список устройств", header_style))
+
+    # Данные
+    data = [['ID', 'Название', 'Серийный №', 'Статус', 'Состояние']]
+    for dev in queryset:
+        data.append([
+            str(dev.id),
+            str(dev.name)[:25],
+            str(dev.serial_number),
+            dev.get_status_display(),
+            dev.get_condition_display()
+        ])
+
+    table = Table(data, colWidths=[40, 200, 100, 100, 100])
+
+    table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), font_name), # Используем наш шрифт
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
+    return response
+
+def export_loans_to_pdf(queryset):
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="loans.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=landscape(A4))
+    elements = []
+
+    styles = getSampleStyleSheet()
+
+    header_style = ParagraphStyle(
+        'RusHeader',
+        parent=styles['Normal'],
+        fontName=font_name,
+        fontSize=14,
+        alignment=1,
+        spaceAfter=20
+    )
+
+    elements.append(Paragraph("Отчет по выдачам", header_style))
+
+    data = [['ID', 'Сотрудник', 'Устройство', 'Дата выдачи', 'Дата возврата']]
+    for loan in queryset:
+        data.append([
+            str(loan.id),
+            loan.user.username,
+            loan.device.name[:20],
+            loan.loaned_at.strftime("%Y-%m-%d"),
+            loan.due_date.strftime("%Y-%m-%d")
+        ])
+
+    table = Table(data, colWidths=[40, 150, 200, 100, 100])
+
+    table.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), font_name),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+
+    elements.append(table)
+    doc.build(elements)
     return response

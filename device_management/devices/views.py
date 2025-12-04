@@ -22,6 +22,8 @@ from .utils import (
     export_loans_to_csv,
     export_loans_to_excel,
     export_loans_to_json,
+    export_devices_to_pdf,
+    export_loans_to_pdf,
 )
 
 
@@ -145,6 +147,11 @@ class DeviceViewSet(viewsets.ModelViewSet):
     def export_json(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return export_devices_to_json(queryset)
+
+    @action(detail=False, methods=["get"])
+    def export_pdf(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_devices_to_pdf(queryset)
 
     @action(detail=False, methods=["get"])
     def export(self, request):
@@ -283,6 +290,11 @@ class LoanViewSet(viewsets.ModelViewSet):
     def export_json(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         return export_loans_to_json(queryset)
+
+    @action(detail=False, methods=["get"])
+    def export_pdf(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        return export_loans_to_pdf(queryset)
 
     @action(detail=False, methods=["get"])
     def export(self, request):
